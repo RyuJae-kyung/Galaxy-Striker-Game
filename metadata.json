@@ -1,0 +1,8 @@
+{
+  "name": "갤럭시 스트라이커 (Galaxy Striker)",
+  "description": "추억의 고전 명작 갤럭시/갤러그 스타일의 화려하고 박진감 넘치는 우주 비행 슈팅 아케이드 게임",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

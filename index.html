@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>갤럭시 스트라이커 (Galaxy Striker)</title>
+    <meta name="description" content="추억의 고전 명작 갤럭시/갤러그 스타일의 화려하고 박진감 넘치는 우주 비행 슈팅 아케이드 게임" />
+    <meta property="og:title" content="갤럭시 스트라이커 (Galaxy Striker)" />
+    <meta property="og:description" content="추억의 고전 명작 갤럭시/갤러그 스타일의 화려하고 박진감 넘치는 우주 비행 슈팅 아케이드 게임" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS via CDN (Zero-build GitHub Pages support) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Outfit', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+              arcade: ['"Press Start 2P"', 'monospace'],
+              mono: ['"JetBrains Mono"', 'monospace'],
+            }
+          }
+        }
+      }
+    </script>
+
+    <!-- Canvas Confetti CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js"></script>
+
+    <style>
+      body {
+        font-family: 'Outfit', sans-serif;
+        background-color: #030712;
+        color: #f1f5f9;
+        user-select: none;
+        -webkit-user-select: none;
+        overflow-x: hidden;
+      }
+      .font-arcade { font-family: 'Press Start 2P', monospace; }
+      .font-mono-numbers { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+      
+      /* Retro CRT scanlines effect */
+      .crt-overlay::after {
+        content: " ";
+        display: block;
+        position: absolute;
+        top: 0; left: 0; bottom: 0; right: 0;
+        background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+        z-index: 20;
+        background-size: 100% 3px, 6px 100%;
+        pointer-events: none;
+        opacity: 0.7;
+      }
+      
+      canvas {
+        touch-action: none;
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+      }
+    </style>
+  </head>
+  <body class="flex flex-col min-h-screen bg-slate-950 text-slate-100 antialiased">
+
+    <!-- Top Navigation Bar -->
+    <header class="flex items-center justify-between gap-8 px-4 sm:px-8 py-3.5 border-b border-slate-800 bg-slate-900/90 backdrop-blur-md z-40">
+      <button id="brandLogoBtn" class="text-lg sm:text-xl font-bold tracking-tight text-white flex items-center gap-2 whitespace-nowrap shrink-0 hover:text-cyan-400 transition-colors">
+        <span class="text-xl">🚀</span>
+        <span>GALAXY STRIKER</span>
+      </button>
+
+      <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-400">
+        <button id="headerHangarBtn" class="hover:text-cyan-300 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5">
+          <span>🛠️</span> 함선 격납고
+        </button>
+        <button id="headerLeaderboardBtn" class="hover:text-amber-300 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5">
+          <span>🏆</span> 명예의 전당
+        </button>
+        <button id="headerAchievementsBtn" class="hover:text-purple-300 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5">
+          <span>🎖️</span> 업적 훈장
+        </button>
+        <button id="headerHowToBtn" class="hover:text-blue-300 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5">
+          <span>❓</span> 조작법
+        </button>
+      </nav>
+
+      <div class="flex items-center gap-3 shrink-0">
+        <div class="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-emerald-950/60 border border-emerald-800/70 rounded-lg text-xs">
+          <span>💎</span>
+          <span id="topScrapVal" class="font-mono-numbers font-bold text-emerald-300">200</span>
+        </div>
+        <button id="headerStartBtn" class="px-5 py-2 text-xs font-bold text-white bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 rounded-lg shadow-lg shadow-cyan-950/60 active:scale-95 transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5">
+          <span>▶</span> 출격 시작
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 flex flex-col items-center justify-center p-2 sm:p-4 relative overflow-hidden">
+
+      <!-- ================= 1. TITLE MENU VIEW ================= -->
+      <div id="menuView" class="w-full max-w-4xl mx-auto space-y-6 sm:space-y-8 py-4 sm:py-8 z-10">
+        <!-- Hero Header -->
+        <div class="text-center space-y-3">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/70 border border-cyan-800 text-cyan-300 text-xs font-semibold">
+            <span>✨</span>
+            <span>360° 은하 서바이벌 로그라이크 & 클래식 아케이드</span>
+          </div>
+          <h1 class="text-4xl sm:text-6xl font-black font-arcade tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-200 to-amber-400 drop-shadow-[0_0_25px_rgba(6,182,212,0.4)]">
+            GALAXY STRIKER
+          </h1>
+          <p class="text-sm sm:text-base text-slate-400 max-w-xl mx-auto leading-relaxed">
+            광활한 은하계를 360도 자유 비행하며 소행성을 채굴하고, 레벨 업 스킬 카드를 조합하여 몰려오는 외계 편대와 거대 기함 보스를 격파하세요.
+          </p>
+        </div>
+
+        <!-- Mode Selectors -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Mode 1: 360 Open Galaxy Roguelite -->
+          <div id="btnStart360" class="group relative p-6 rounded-2xl bg-gradient-to-br from-slate-900/90 to-cyan-950/40 border-2 border-cyan-500/80 hover:border-cyan-400 transition-all duration-300 cursor-pointer shadow-2xl hover:shadow-[0_0_25px_rgba(6,182,212,0.35)] flex flex-col justify-between">
+            <div class="absolute top-4 right-4">
+              <span class="px-2.5 py-1 rounded-full bg-cyan-500 text-black text-[10px] font-black uppercase tracking-wider">NEW MODE</span>
+            </div>
+            <div>
+              <div class="p-3 rounded-xl bg-cyan-950/80 border border-cyan-700 text-cyan-300 w-fit mb-4 text-2xl group-hover:scale-110 transition-transform">
+                🧭
+              </div>
+              <h2 class="text-xl font-black text-white group-hover:text-cyan-300 transition-colors">
+                은하 서바이벌 (360° Open Space)
+              </h2>
+              <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+                광활한 우주 성간 구역을 360도 자유 비행하며 소행성을 채굴하고 스타라이트 XP를 수집하세요. 레벨 업 시 <b>유도 미사일, 수호 위성, 연쇄 전격포, 블랙홀</b> 등 스킬 카드를 조합합니다!
+              </p>
+            </div>
+            <div class="mt-6 flex items-center justify-between text-xs font-bold text-cyan-400 pt-3 border-t border-cyan-900/40">
+              <span>360도 성간 비행 시작</span>
+              <span class="group-hover:translate-x-1 transition-transform">➔</span>
+            </div>
+          </div>
+
+          <!-- Mode 2: Classic 2D Vertical Arcade Galaxian -->
+          <div id="btnStartArcade" class="group relative p-6 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-amber-500 hover:bg-slate-900 transition-all duration-300 cursor-pointer shadow-xl hover:shadow-[0_0_20px_rgba(245,158,11,0.25)] flex flex-col justify-between">
+            <div>
+              <div class="p-3 rounded-xl bg-amber-950/80 border border-amber-800 text-amber-400 w-fit mb-4 text-2xl group-hover:scale-110 transition-transform">
+                🚀
+              </div>
+              <h2 class="text-xl font-bold text-white group-hover:text-amber-300 transition-colors">
+                클래식 아케이드 (Vertical Arcade)
+              </h2>
+              <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                추억의 오락실 갤럭시/갤러그 방식의 클래식 종스크롤 슈팅 모드. 상단 편대의 급강하 다이브와 보너스 챌린징 스테이지, 5개 스테이지를 정복하세요.
+              </p>
+            </div>
+            <div class="mt-6 flex items-center justify-between text-xs font-bold text-amber-400 pt-3 border-t border-slate-800">
+              <span>정통 아케이드 모드 출격</span>
+              <span class="group-hover:translate-x-1 transition-transform">➔</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ship Status Strip -->
+        <div class="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-cyan-950/60 border border-cyan-500 flex items-center justify-center text-2xl">
+              🚀
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span id="currentShipName" class="font-bold text-sm text-white">알파 바이퍼</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-medium">현재 출격 기체</span>
+              </div>
+              <div id="currentShipAbility" class="text-xs text-slate-400 mt-0.5">
+                균형 잡힌 트윈 연사 & 빠른 에너지 회복
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 w-full sm:w-auto">
+            <button id="menuHangarBtn" class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition-colors">
+              <span>🛠️</span> 기체 변경 및 강화
+            </button>
+            <button id="menuHowToBtn" class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition-colors">
+              <span>❓</span> 조작 지침
+            </button>
+          </div>
+        </div>
+
+        <!-- Bottom Controls & Display Toggles -->
+        <div class="flex flex-wrap items-center justify-center gap-5 text-xs text-slate-400 pt-2">
+          <button id="btnToggleMute" class="flex items-center gap-1.5 hover:text-white transition-colors">
+            <span>🔊</span> 효과음: <span class="sfx-status text-cyan-400 font-semibold">켜짐</span>
+          </button>
+          <button id="btnToggleBgmMute" class="flex items-center gap-1.5 hover:text-white transition-colors">
+            <span>🎵</span> 아케이드 BGM: <span class="bgm-status text-amber-400 font-semibold">켜짐</span>
+          </button>
+          <button id="btnToggleCrt" class="flex items-center gap-1.5 hover:text-white transition-colors">
+            <span>📺</span> CRT 주사선: <span id="crtStatus" class="text-slate-400 font-semibold">OFF</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ================= 2. ACTIVE GAME VIEW ================= -->
+      <div id="gameView" class="hidden relative w-full max-w-[640px] aspect-[640/860] max-h-[88vh] rounded-2xl overflow-hidden shadow-2xl border border-slate-800/90">
+        <!-- Arena Canvas Frame -->
+        <div id="gameArenaContainer" class="relative w-full h-full">
+          <canvas id="gameCanvas" width="640" height="860" class="w-full h-full block cursor-crosshair bg-slate-950"></canvas>
+
+          <!-- Top HUD -->
+          <div class="absolute top-0 left-0 right-0 z-30 p-2 sm:p-4 pointer-events-none select-none">
+            <div class="flex items-center justify-between gap-2 max-w-2xl mx-auto bg-slate-900/85 backdrop-blur-md border border-slate-800/80 rounded-xl px-3 py-2 text-xs shadow-lg">
+              <div class="flex items-center gap-4">
+                <div>
+                  <div class="text-[10px] text-slate-400 font-semibold">SCORE</div>
+                  <div id="hudScore" class="text-sm sm:text-base font-bold font-mono-numbers text-cyan-400">0</div>
+                </div>
+                <div class="hidden sm:block border-l border-slate-700/60 pl-4">
+                  <div class="text-[10px] text-slate-400 font-semibold">HIGH SCORE</div>
+                  <div id="hudHighScore" class="text-sm sm:text-base font-bold font-mono-numbers text-amber-400">128,500</div>
+                </div>
+              </div>
+
+              <!-- Center Level / Stage -->
+              <div class="text-center">
+                <div id="hudModeLabel" class="text-[10px] text-amber-400 font-semibold">LEVEL</div>
+                <div id="hudModeValue" class="font-arcade text-amber-400 text-xs sm:text-sm font-bold">1</div>
+              </div>
+
+              <!-- Currency & Controls -->
+              <div class="flex items-center gap-2 pointer-events-auto">
+                <div class="flex items-center gap-1 bg-emerald-950/60 border border-emerald-800/50 rounded-lg px-2 py-1">
+                  <span>💎</span>
+                  <span id="hudScrap" class="font-mono-numbers text-emerald-300 font-bold text-xs">200</span>
+                </div>
+                <button id="hudToggleMute" class="p-1.5 rounded-lg bg-slate-800/80 text-cyan-400 hover:bg-slate-700">🔊</button>
+                <button id="hudToggleBgm" class="p-1.5 rounded-lg bg-slate-800/80 text-amber-400 hover:bg-slate-700">🎵</button>
+                <button id="hudPauseBtn" class="p-1.5 rounded-lg bg-slate-800/80 text-slate-200 hover:bg-slate-700">⏸</button>
+              </div>
+            </div>
+
+            <!-- XP Bar (360 mode) -->
+            <div id="hudXpContainer" class="max-w-2xl mx-auto mt-1.5 px-1">
+              <div class="w-full bg-slate-900/90 border border-slate-800/80 h-2 rounded-full overflow-hidden p-0.5">
+                <div id="hudXpBar" class="h-full bg-gradient-to-r from-cyan-500 to-amber-400 rounded-full transition-all duration-150" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <!-- Hull & Boost & EMP Row -->
+            <div class="flex items-center justify-between gap-3 max-w-2xl mx-auto mt-2 px-1">
+              <!-- Hull Bar -->
+              <div class="flex-1 max-w-xs bg-slate-900/80 backdrop-blur-sm border border-slate-800/80 rounded-lg p-1.5">
+                <div class="flex justify-between items-center text-[10px] text-slate-300 mb-1 px-1">
+                  <span class="font-semibold">🛡️ 방어막 (HULL)</span>
+                  <span id="hudHpVal" class="font-mono-numbers font-bold text-cyan-300">100%</span>
+                </div>
+                <div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden p-0.5">
+                  <div id="hudHpBar" class="h-full bg-gradient-to-r from-cyan-500 to-emerald-400 rounded-full transition-all duration-150" style="width: 100%"></div>
+                </div>
+              </div>
+
+              <!-- Boost Meter -->
+              <div id="boostMeterWrapper" class="w-28 bg-slate-900/80 backdrop-blur-sm border border-slate-800/80 rounded-lg p-1.5 hidden sm:block">
+                <div class="flex justify-between items-center text-[10px] text-slate-300 mb-1 px-1">
+                  <span class="font-semibold">⚡ 부스트</span>
+                  <span id="hudBoostVal" class="font-mono-numbers font-bold text-amber-300">100%</span>
+                </div>
+                <div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden p-0.5">
+                  <div id="hudBoostBar" class="h-full bg-gradient-to-r from-amber-500 to-orange-400 rounded-full transition-all duration-100" style="width: 100%"></div>
+                </div>
+              </div>
+
+              <!-- EMP Bombs -->
+              <div class="flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-sm border border-slate-800/80 rounded-lg px-2.5 py-1.5 pointer-events-auto">
+                <span class="text-[10px] text-slate-400 font-semibold hidden sm:inline">EMP:</span>
+                <div id="hudBombIcons" class="flex items-center gap-0.5"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tactical Radar Minimap (360 Mode) -->
+          <div id="radarContainer" class="absolute top-20 right-3 sm:right-5 z-20 pointer-events-none select-none">
+            <div class="bg-slate-900/80 backdrop-blur-md p-1 rounded-2xl border border-cyan-800/60 shadow-xl">
+              <canvas id="radarCanvas" width="110" height="110" class="rounded-xl block"></canvas>
+              <div class="text-[9px] text-cyan-400 font-mono text-center tracking-wider pt-0.5">RADAR 900M</div>
+            </div>
+          </div>
+
+          <!-- Mobile Touch Controls (360 Mode) -->
+          <div id="touchControls360" class="absolute inset-0 pointer-events-none select-none z-30 sm:hidden">
+            <div id="touchJoystickArea" class="absolute bottom-6 left-6 w-28 h-28 rounded-full bg-slate-900/60 border border-slate-700/80 backdrop-blur-sm pointer-events-auto flex items-center justify-center touch-none">
+              <div id="touchJoystickKnob" class="w-12 h-12 rounded-full bg-cyan-500/80 border-2 border-cyan-300 shadow-lg"></div>
+            </div>
+            <div class="absolute bottom-6 right-6 flex items-center gap-3 pointer-events-auto">
+              <button id="btnTouchBoost" class="flex flex-col items-center justify-center w-14 h-14 rounded-full bg-amber-600/90 active:bg-amber-500 text-white border-2 border-amber-300 shadow-lg active:scale-95">
+                <span class="text-sm">⚡</span>
+                <span class="text-[9px] font-bold">부스트</span>
+              </button>
+              <button class="btn-touch-bomb flex flex-col items-center justify-center w-14 h-14 rounded-full bg-rose-600/90 active:bg-rose-500 text-white border-2 border-rose-300 shadow-lg active:scale-95">
+                <span class="text-sm">💣</span>
+                <span class="text-[9px] font-bold">EMP</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Mobile Touch Controls (Classic Mode) -->
+          <div id="touchControlsClassic" class="hidden absolute bottom-4 left-4 right-4 z-20 flex items-center justify-between pointer-events-none sm:hidden">
+            <div class="text-[10px] text-slate-400 bg-slate-950/70 px-2 py-1 rounded border border-slate-800">
+              화면 터치 드래그로 기체 이동
+            </div>
+            <button class="btn-touch-bomb pointer-events-auto flex flex-col items-center justify-center w-14 h-14 rounded-full bg-rose-600 text-white border-2 border-rose-300 shadow-xl active:scale-95">
+              <span>💣</span>
+              <span class="text-[9px] font-bold">EMP</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-3 px-4 sm:px-8 border-t border-slate-900 bg-slate-950 text-slate-500 text-xs flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <span>GALAXY STRIKER</span>
+        <span>·</span>
+        <span>은하 서바이벌 & 클래식 아케이드 (Vanilla JS)</span>
+      </div>
+      <div class="flex items-center gap-4 text-[11px]">
+        <span>PC: WASD/방향키(비행) + 마우스/Space(사격) + Shift(부스트) + B/X(EMP)</span>
+      </div>
+    </footer>
+
+    <!-- ================= 3. MODALS ================= -->
+
+    <!-- Level Up Roguelite Draft Modal -->
+    <div id="levelUpModal" class="modal-container hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
+      <div class="relative w-full max-w-2xl bg-slate-900 border border-slate-700/90 rounded-2xl shadow-2xl p-6 text-slate-100 text-center">
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-950/60 border border-amber-500/70 text-amber-300 text-xs font-bold mb-2">
+          <span>✨</span> 은하 함선 레벨 업!
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-black font-arcade text-amber-400">CHOOSE AN UPGRADE</h2>
+        <p class="text-xs text-slate-400 mt-1 mb-6">원하는 전술 무장 또는 패시브 능력을 선택하여 기체를 강화하세요.</p>
+        <div id="levelUpChoices" class="grid grid-cols-1 sm:grid-cols-3 gap-3.5"></div>
+      </div>
+    </div>
+
+    <!-- Hangar & Upgrades Modal -->
+    <div id="hangarModal" class="modal-container hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/85 backdrop-blur-md overflow-y-auto">
+      <div class="relative w-full max-w-4xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl p-4 sm:p-6 text-slate-100 my-auto">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+          <div>
+            <h2 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2">🛠️ 격납고 & 함선 연구소</h2>
+            <p class="text-xs text-slate-400">기체를 편성하고 획득한 스크랩 크리스털로 영구 강화하세요.</p>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="flex items-center gap-1.5 bg-emerald-950/70 border border-emerald-700/70 px-3 py-1.5 rounded-xl">
+              <span>💎</span>
+              <span id="hangarScrapVal" class="font-mono-numbers font-bold text-emerald-400">200</span>
+            </div>
+            <button class="close-modal-btn p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white">✕</button>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
+          <div class="lg:col-span-7 space-y-4">
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400">출격 함선 선택</h3>
+            <div id="hangarShipList" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+          </div>
+          <div class="lg:col-span-5 space-y-4">
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400">전투 함대 업그레이드</h3>
+            <div id="hangarUpgradeList" class="space-y-3"></div>
+          </div>
+        </div>
+        <div class="mt-6 pt-4 border-t border-slate-800 flex justify-end">
+          <button class="close-modal-btn px-6 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-xl transition-all">준비 완료</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leaderboard Modal -->
+    <div id="leaderboardModal" class="modal-container hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
+      <div class="relative w-full max-w-lg bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-5 sm:p-6 text-slate-100">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">🏆 명예의 전당 (HALL OF FAME)</h2>
+          <button class="close-modal-btn p-1.5 rounded-lg bg-slate-800 text-slate-400">✕</button>
+        </div>
+        <div id="leaderboardList" class="mt-4 space-y-2 max-h-[60vh] overflow-y-auto pr-1"></div>
+      </div>
+    </div>
+
+    <!-- Achievements Modal -->
+    <div id="achievementsModal" class="modal-container hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
+      <div class="relative w-full max-w-lg bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-5 sm:p-6 text-slate-100">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">🎖️ 업적 훈장 (ACHIEVEMENTS)</h2>
+          <button class="close-modal-btn p-1.5 rounded-lg bg-slate-800 text-slate-400">✕</button>
+        </div>
+        <div id="achievementsList" class="mt-4 space-y-2.5 max-h-[60vh] overflow-y-auto pr-1"></div>
+      </div>
+    </div>
+
+    <!-- How to Play Modal -->
+    <div id="howToModal" class="modal-container hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto">
+      <div class="relative w-full max-w-lg bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-5 text-slate-100 my-auto text-xs space-y-3">
+        <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+          <h2 class="text-base font-bold text-white">조작법 & 게임 가이드</h2>
+          <button class="close-modal-btn p-1 rounded bg-slate-800 text-slate-400">✕</button>
+        </div>
+        <div class="p-3 bg-slate-950 rounded-xl space-y-1.5">
+          <div class="font-bold text-cyan-400">PC 키보드 & 마우스</div>
+          <div>• <b>WASD / 방향키</b>: 기체 360도 비행 및 이동</div>
+          <div>• <b>마우스 커서 방향</b>: 기수 자동 조준 & 사격</div>
+          <div>• <b>Shift / 우클릭</b>: 애프터버너 초고속 부스트</div>
+          <div>• <b>B 또는 X 키</b>: EMP 전역 섬멸 폭탄 발동</div>
+          <div>• <b>P / ESC 키</b>: 일시 정지</div>
+        </div>
+        <div class="p-3 bg-slate-950 rounded-xl space-y-1.5">
+          <div class="font-bold text-amber-400">모바일 터치 조작</div>
+          <div>• <b>좌측 가상 조이스틱</b>: 360도 전방위 비행 조향</div>
+          <div>• <b>우측 부스트 / EMP 버튼</b>: 고속 회피 및 폭탄 발동</div>
+        </div>
+        <div class="pt-2 flex justify-end">
+          <button class="close-modal-btn px-4 py-2 bg-cyan-600 text-white font-bold rounded-lg">확인</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pause Modal -->
+    <div id="pauseModal" class="modal-container hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
+      <div class="relative w-full max-w-sm bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-6 text-slate-100 text-center space-y-4">
+        <div class="font-arcade text-xl font-bold text-amber-400">PAUSED</div>
+        <div class="space-y-2">
+          <button id="btnResume" class="w-full py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold text-xs rounded-xl shadow-md">계속 비행 (Resume)</button>
+          <button id="btnRestart" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl">재도전</button>
+          <button id="btnExitToMenu" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-400 text-xs rounded-xl">메인 타이틀로 복귀</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="gameOverModal" class="modal-container hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
+      <div class="relative w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-6 text-slate-100 text-center">
+        <div class="font-arcade text-3xl font-black text-rose-500 mb-1">GAME OVER</div>
+        <p class="text-xs text-slate-400">전투기가 피격되었습니다. 임무 기록 정산</p>
+        <div class="my-5 p-4 bg-slate-950/80 border border-slate-800 rounded-xl">
+          <div class="text-[10px] text-slate-400 font-semibold">최종 득점 (FINAL SCORE)</div>
+          <div id="finalScoreVal" class="text-4xl font-black font-mono-numbers text-cyan-400 mt-1">0</div>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-left mb-5 text-xs">
+          <div class="p-2.5 bg-slate-950/60 border border-slate-800 rounded-lg">
+            <div class="text-[10px] text-slate-400">도달 레벨 / 스테이지</div>
+            <div id="finalLevelVal" class="font-mono-numbers font-bold text-slate-200">1</div>
+          </div>
+          <div class="p-2.5 bg-slate-950/60 border border-slate-800 rounded-lg">
+            <div class="text-[10px] text-slate-400">획득 크리스털</div>
+            <div id="finalScrapVal" class="font-mono-numbers font-bold text-emerald-400">+0</div>
+          </div>
+        </div>
+        <!-- Pilot Initials -->
+        <div class="mb-5 p-3 bg-slate-950/50 border border-slate-800 rounded-xl">
+          <div class="text-xs text-slate-300 font-semibold mb-2">명예의 전당 등록 (콜사인 3글자)</div>
+          <div class="flex justify-center items-center gap-2">
+            <input id="pilotInitialsInput" type="text" maxlength="4" value="ACE" class="w-20 px-2 py-1.5 bg-slate-900 border border-cyan-500 rounded-lg text-center font-arcade text-xs text-cyan-300 uppercase">
+            <button id="btnSaveScore" class="px-3 py-1.5 bg-cyan-700 hover:bg-cyan-600 text-white font-bold text-xs rounded-lg">기록 등록</button>
+          </div>
+          <div id="scoreSavedNotice" class="hidden text-xs text-emerald-400 mt-2 font-semibold">✓ 랭킹에 등록되었습니다!</div>
+        </div>
+        <div class="flex items-center gap-3">
+          <button id="btnGameOverHangar" class="flex-1 py-3 bg-slate-800 text-slate-200 font-bold text-xs rounded-xl border border-slate-700">격납고 & 강화</button>
+          <button id="btnGameOverRestart" class="flex-1 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold text-xs rounded-xl shadow-lg">다시 출격</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Logic Script (Zero Build Vanilla JS) -->
+    <script src="./script.js"></script>
+  </body>
+</html>

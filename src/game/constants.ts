@@ -1,0 +1,252 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { ShipConfig, Achievement, LeaderboardEntry, AbilityCard } from './types';
+
+export const CANVAS_WIDTH = 640;
+export const CANVAS_HEIGHT = 860;
+
+// 360 World Dimensions
+export const WORLD_WIDTH = 3400;
+export const WORLD_HEIGHT = 3400;
+
+export const SHIP_CONFIGS: Record<string, ShipConfig> = {
+  alpha_viper: {
+    id: 'alpha_viper',
+    name: '알파 바이퍼',
+    nameEn: 'Alpha Viper',
+    description: '은하 연합의 주력 표준 전투기. 균형 잡힌 기동성과 고정밀 트윈 펄스 캐논 탑재.',
+    cost: 0,
+    unlocked: true,
+    baseSpeed: 380,
+    baseHealth: 100,
+    baseFireRate: 6.5,
+    color: '#06b6d4',
+    engineGlow: '#38bdf8',
+    specialAbility: '균형 잡힌 트윈 연사 & 빠른 에너지 회복',
+    spriteShape: 'spear',
+  },
+  cosmic_phantom: {
+    id: 'cosmic_phantom',
+    name: '코스믹 팬텀',
+    nameEn: 'Cosmic Phantom',
+    description: '광속 요격을 위해 개발된 초경량 스텔스 파이터. 고속 기동과 관통형 빔을 발사합니다.',
+    cost: 450,
+    unlocked: false,
+    baseSpeed: 460,
+    baseHealth: 75,
+    baseFireRate: 8.0,
+    color: '#a855f7',
+    engineGlow: '#c084fc',
+    specialAbility: '초고속 기동 회피 & 고주파 관통 레이저',
+    spriteShape: 'needle',
+  },
+  titan_dreadnought: {
+    id: 'titan_dreadnought',
+    name: '타이탄 드레드노트',
+    nameEn: 'Titan Dreadnought',
+    description: '중장갑 요새형 돌격함. 강력한 에너지 방어막과 광역 산탄 플라즈마로 적을 섬멸합니다.',
+    cost: 900,
+    unlocked: false,
+    baseSpeed: 300,
+    baseHealth: 160,
+    baseFireRate: 5.0,
+    color: '#f59e0b',
+    engineGlow: '#fbbf24',
+    specialAbility: '강화 장갑 실드 & 광범위 산탄 일제 사격',
+    spriteShape: 'heavy',
+  },
+  solar_phoenix: {
+    id: 'solar_phoenix',
+    name: '솔라 피닉스',
+    nameEn: 'Solar Phoenix',
+    description: '태양의 핵 에너지를 동력으로 삼는 전설의 기체. 적을 추적하는 플라즈마 탄환을 발사합니다.',
+    cost: 1600,
+    unlocked: false,
+    baseSpeed: 410,
+    baseHealth: 120,
+    baseFireRate: 7.2,
+    color: '#ef4444',
+    engineGlow: '#f97316',
+    specialAbility: '스마트 유도 플라즈마탄 & 자동 재생 코어',
+    spriteShape: 'phoenix',
+  },
+};
+
+export const ABILITY_CARDS_CATALOG: AbilityCard[] = [
+  {
+    id: 'quantum_missile',
+    title: '유도 퀀텀 미사일',
+    titleEn: 'Quantum Missiles',
+    description: '주기적으로 적을 자동 추적하는 고폭성 양자 마이크로 미사일을 연사합니다.',
+    icon: '🚀',
+    level: 0,
+    maxLevel: 5,
+    rarity: 'rare',
+  },
+  {
+    id: 'orbital_satellite',
+    title: '궤도 수호 위성',
+    titleEn: 'Orbital Satellites',
+    description: '기체 주변을 회전하며 접근하는 적과 탄환을 차단 및 파괴하는 플라즈마 위성을 배치합니다.',
+    icon: '🛰️',
+    level: 0,
+    maxLevel: 4,
+    rarity: 'rare',
+  },
+  {
+    id: 'chain_lightning',
+    title: '연쇄 아크 전격포',
+    titleEn: 'Chain Lightning',
+    description: '고압의 번개가 적들을 연쇄적으로 감전시켜 일망타진합니다.',
+    icon: '⚡',
+    level: 0,
+    maxLevel: 5,
+    rarity: 'epic',
+  },
+  {
+    id: 'graviton_blackhole',
+    title: '중력 특이점 블랙홀',
+    titleEn: 'Graviton Singularity',
+    description: '일정 주기마다 적들을 중심부로 강력하게 빨아들이는 소형 블랙홀을 전개합니다.',
+    icon: '🌀',
+    level: 0,
+    maxLevel: 4,
+    rarity: 'legendary',
+  },
+  {
+    id: 'flak_cannon',
+    title: '확산 플랙 산탄포',
+    titleEn: 'Flak Scattergun',
+    description: '기체 전방으로 대구경 파편탄을 발사하여 강력한 넉백과 광역 데미지를 입힙니다.',
+    icon: '💥',
+    level: 0,
+    maxLevel: 5,
+    rarity: 'common',
+  },
+  {
+    id: 'plasma_cutter',
+    title: '관통 플라즈마 커터',
+    titleEn: 'Plasma Beam Cutter',
+    description: '소행성과 외계 편대를 관통하는 고출력 레이저 빔을 일직선으로 분사합니다.',
+    icon: '✨',
+    level: 0,
+    maxLevel: 5,
+    rarity: 'rare',
+  },
+  {
+    id: 'hyper_afterburner',
+    title: '초공간 애프터버너',
+    titleEn: 'Hyperspace Boost',
+    description: '비행 속도와 부스트 게이지 충전율을 25% 향상시키고 화염 궤적 데미지를 부여합니다.',
+    icon: '🔥',
+    level: 0,
+    maxLevel: 4,
+    rarity: 'common',
+  },
+  {
+    id: 'nano_repair',
+    title: '나노 수리 로봇 군단',
+    titleEn: 'Nano Repair Nanites',
+    description: '초당 선체 내구도를 지속적으로 복구하고 방어막 재생 대기시간을 단축합니다.',
+    icon: '🛠️',
+    level: 0,
+    maxLevel: 5,
+    rarity: 'common',
+  },
+  {
+    id: 'magnetic_vacuum',
+    title: '자기장 진공 흡입기',
+    titleEn: 'Magnetic Harvester',
+    description: '먼 거리의 스타라이트 XP 젬과 스크랩 자원을 자동으로 자석처럼 끌어당깁니다.',
+    icon: '🧲',
+    level: 0,
+    maxLevel: 4,
+    rarity: 'common',
+  },
+];
+
+export const INITIAL_UPGRADE_COSTS = {
+  fireRate: [100, 220, 450, 800],
+  damage: [120, 260, 520, 950],
+  maxShield: [90, 200, 400, 750],
+  bombStock: [150, 300, 600, 1100],
+  drone: [500, 1200],
+};
+
+export const DEFAULT_LEADERBOARD: LeaderboardEntry[] = [
+  { id: '1', name: 'KOR', score: 128500, wave: 8, shipId: 'solar_phoenix', date: '2026-11-02', mode: 'survivor_360' },
+  { id: '2', name: 'GAL', score: 94200, wave: 6, shipId: 'titan_dreadnought', date: '2026-10-28', mode: 'survivor_360' },
+  { id: '3', name: 'ACE', score: 78900, wave: 5, shipId: 'cosmic_phantom', date: '2026-10-25', mode: 'survivor_360' },
+  { id: '4', name: 'VIP', score: 53100, wave: 4, shipId: 'alpha_viper', date: '2026-10-20', mode: 'arcade' },
+  { id: '5', name: 'NEO', score: 36200, wave: 3, shipId: 'alpha_viper', date: '2026-10-15', mode: 'arcade' },
+];
+
+export const INITIAL_ACHIEVEMENTS: Achievement[] = [
+  {
+    id: 'first_sortie',
+    title: '첫 번째 출격',
+    description: '갤럭시 게임을 처음으로 플레이하고 1회 이상 적을 요격하세요.',
+    unlocked: false,
+    icon: '🚀',
+    rewardScrap: 50,
+  },
+  {
+    id: 'level_10_survivor',
+    title: '베테랑 파일럿 레벨 10',
+    description: '은하 서바이벌 모드에서 레벨 10에 도달하세요.',
+    unlocked: false,
+    icon: '⭐',
+    rewardScrap: 150,
+  },
+  {
+    id: 'sharpshooter',
+    title: '명사수 (Sharpshooter)',
+    description: '챌린징 스테이지에서 80% 이상의 명중률을 달성하세요.',
+    unlocked: false,
+    icon: '🎯',
+    rewardScrap: 150,
+  },
+  {
+    id: 'dual_pilot',
+    title: '트윈 윙맨 결성',
+    description: '지원 드론을 획득하여 2기의 드론과 함께 출격하세요.',
+    unlocked: false,
+    icon: '🛸',
+    rewardScrap: 200,
+  },
+  {
+    id: 'gorgon_slayer',
+    title: '모선 격추',
+    description: '외계 기함 보스를 완전히 파괴하세요.',
+    unlocked: false,
+    icon: '💥',
+    rewardScrap: 300,
+  },
+  {
+    id: 'bomb_expert',
+    title: 'EMP 폭풍',
+    description: '한 번의 EMP 폭탄으로 적기 8기 이상을 일거에 섬멸하세요.',
+    unlocked: false,
+    icon: '⚡',
+    rewardScrap: 150,
+  },
+  {
+    id: 'galaxy_savior',
+    title: '은하의 구원자',
+    description: '은하계 보스를 처치하거나 5스테이지를 돌파하세요.',
+    unlocked: false,
+    icon: '👑',
+    rewardScrap: 600,
+  },
+  {
+    id: 'scrap_collector',
+    title: '은하계 자원 수집가',
+    description: '누적 1,000개 이상의 스크랩 크리스털을 획득하세요.',
+    unlocked: false,
+    icon: '💎',
+    rewardScrap: 200,
+  },
+];
